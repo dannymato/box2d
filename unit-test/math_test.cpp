@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2019 Erin Catto
+// Copyright (c) 2020 Erin Catto
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,52 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "test.h"
+#include "box2d/box2d.h"
+#include <stdio.h>
 
-class AddPair : public Test
+#include "doctest.h"
+
+DOCTEST_TEST_CASE("math test")
 {
-public:
-
-	AddPair()
+	SUBCASE("sweep")
 	{
-		m_world->SetGravity(b2Vec2(0.0f,0.0f));
-		{
-			b2CircleShape shape;
-			shape.m_p.SetZero();
-			shape.m_radius = 0.1f;
+		// From issue #447
+		b2Sweep sweep;
+		sweep.localCenter.SetZero();
+		sweep.c0.Set(3.0f, 4.0f);
+		sweep.c.Set(3.0f, 4.0f);
+		sweep.a0 = 0.0f;
+		sweep.a = 0.0f;
+		sweep.alpha0 = 0.0f;
 
-			float minX = -6.0f;
-			float maxX = 0.0f;
-			float minY = 4.0f;
-			float maxY = 6.0f;
-			
-			for (int32 i = 0; i < 400; ++i)
-			{
-				b2BodyDef bd;
-				bd.type = b2_dynamicBody;
-				bd.position = b2Vec2(RandomFloat(minX,maxX),RandomFloat(minY,maxY));
-				b2Body* body = m_world->CreateBody(&bd);
-				body->CreateFixture(&shape, 0.01f);
-			}
-		}
-		
-		{
-			b2PolygonShape shape;
-			shape.SetAsBox(1.5f, 1.5f);
-			b2BodyDef bd;
-			bd.type = b2_dynamicBody;
-			bd.position.Set(-40.0f,5.0f);
-			bd.bullet = true;
-			b2Body* body = m_world->CreateBody(&bd);
-			body->CreateFixture(&shape, 1.0f);
-			body->SetLinearVelocity(b2Vec2(10.0f, 0.0f));
-		}
+		b2Transform transform;
+		sweep.GetTransform(&transform, 0.6f);
+
+		DOCTEST_REQUIRE_EQ(transform.p.x, sweep.c0.x);
+		DOCTEST_REQUIRE_EQ(transform.p.y, sweep.c0.y);
 	}
-
-	static Test* Create()
-	{
-		return new AddPair;
-	}
-};
-
-static int testIndex = RegisterTest("Benchmark", "Add Pair", AddPair::Create);
+}
